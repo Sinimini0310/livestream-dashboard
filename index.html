@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livestream Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0F0F1A 0%, #1a1a2e 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      backdrop-filter: blur(10px);
+    }
+
+    .login-title {
+      font-size: 28px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #FF6B35, #FF8B5A);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .login-subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 30px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      display: block;
+      color: #888;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: #FF6B35;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #FF6B35, #FF8B5A);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-msg {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 12px;
+      border-radius: 8px;
+      color: #EF4444;
+      margin-bottom: 20px;
+      text-align: center;
+      display: none;
+    }
+
+    .dashboard {
+      display: none;
+      padding: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .dashboard-title {
+      font-size: 32px;
+      font-weight: 800;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .device-count {
+      background: rgba(255, 107, 53, 0.1);
+      padding: 10px 20px;
+      border-radius: 10px;
+      color: #FF6B35;
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      padding: 12px 24px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      color: #EF4444;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .devices-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 24px;
+    }
+
+    .device-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 24px;
+      transition: all 0.3s;
+    }
+
+    .device-card:hover {
+      border-color: rgba(255, 107, 53, 0.5);
+      transform: translateY(-4px);
+    }
+
+    .device-card.offline {
+      opacity: 0.6;
+    }
+
+    .device-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .device-name {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .device-model {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .device-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .status-online {
+      background: #10B981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .status-offline {
+      background: #EF4444;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(239, 68, 68, 0.2);
+      color: #EF4444;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .live-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: #EF4444;
+      border-radius: 50%;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .device-info {
+      display: grid;
+      gap: 12px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+
+    .info-label {
+      color: #888;
+      font-size: 14px;
+    }
+
+    .info-value {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .media-section {
+      margin-top: 20px;
+    }
+
+    .media-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #888;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .camera-preview {
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .camera-preview img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+    }
+
+    .camera-placeholder {
+      height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 14px;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .camera-timestamp {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 10px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      font-size: 11px;
+      color: #fff;
+    }
+
+    .audio-section {
+      margin-top: 16px;
+    }
+
+    .audio-player {
+      background: rgba(139, 92, 246, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .audio-player audio {
+      flex: 1;
+      height: 40px;
+    }
+
+    .audio-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(139, 92, 246, 0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8B5CF6;
+    }
+
+    .audio-placeholder {
+      background: rgba(139, 92, 246, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .map-container {
+      margin-top: 16px;
+      border-radius: 12px;
+      overflow: hidden;
+      height: 200px;
+    }
+
+    .map-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .map-placeholder {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .no-devices {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 80px 20px;
+      color: #888;
+    }
+
+    .no-devices-icon {
+      font-size: 80px;
+      margin-bottom: 24px;
+    }
+
+    .no-devices h3 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .refresh-info {
+      text-align: center;
+      color: #666;
+      margin-top: 30px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .refresh-indicator {
+      width: 8px;
+      height: 8px;
+      background: #10B981;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      color: #888;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255, 107, 53, 0.2);
+      border-top-color: #FF6B35;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .connection-time {
+      font-size: 11px;
+      color: #666;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 900px) {
+      .devices-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container" id="loginContainer">
+    <div class="login-box">
+      <h1 class="login-title">🔐 Livestream Dashboard</h1>
+      <p class="login-subtitle">Sicherer Zugang zum Überwachungssystem</p>
+      
+      <div class="error-msg" id="errorMsg">Falsches Passwort</div>
+      
+      <div class="input-group">
+        <label class="input-label">Passwort</label>
+        <input type="password" class="input-field" id="password" placeholder="••••••••••••••••">
+      </div>
+      
+      <button class="login-btn" id="loginBtn" onclick="login()">
+        Zugang freischalten
+      </button>
+      
+      <p style="text-align: center; margin-top: 20px; color: #555; font-size: 12px;">
+        Nur für autorisierte Benutzer
+      </p>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">📡 Live Überwachung</h1>
+      <div class="header-controls">
+        <div class="device-count" id="deviceCount">0 Geräte</div>
+        <button class="logout-btn" onclick="logout()">Abmelden</button>
+      </div>
+    </div>
+    
+    <div class="devices-grid" id="devicesGrid">
+      <div class="loading">
+        <div class="spinner"></div>
+        Verbinde mit Server...
+      </div>
+    </div>
+    
+    <p class="refresh-info">
+      <span class="refresh-indicator"></span>
+      Automatische Aktualisierung alle 2 Sekunden
+    </p>
+  </div>
+
+  <script>
+    const API_URL = 'https://tracking-app-challenge.rork.app/api/trpc';
+    let password = '';
+    let refreshInterval = null;
+
+    async function login() {
+      const passInput = document.getElementById('password').value;
+      const errorMsg = document.getElementById('errorMsg');
+      const loginBtn = document.getElementById('loginBtn');
+
+      if (!passInput) {
+        errorMsg.textContent = 'Bitte Passwort eingeben';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Überprüfe...';
+
+      try {
+        const response = await fetch(`${API_URL}/livestream.verifyPassword?input=${encodeURIComponent(JSON.stringify({ password: passInput }))}`);
+        const result = await response.json();
+        
+        if (result.result?.data?.json?.valid) {
+          password = passInput;
+          document.getElementById('loginContainer').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          fetchDevices();
+          refreshInterval = setInterval(fetchDevices, 2000);
+        } else {
+          errorMsg.textContent = 'Falsches Passwort';
+          errorMsg.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        errorMsg.textContent = 'Verbindungsfehler zum Server';
+        errorMsg.style.display = 'block';
+      }
+
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Zugang freischalten';
+    }
+
+    function logout() {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+      password = '';
+      document.getElementById('loginContainer').style.display = 'flex';
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('password').value = '';
+    }
+
+    async function fetchDevices() {
+      try {
+        const response = await fetch(`${API_URL}/livestream.getConnectedDevices?input=${encodeURIComponent(JSON.stringify({ password }))}`);
+        const result = await response.json();
+        
+        if (result.result?.data?.json?.devices) {
+          renderDevices(result.result.data.json.devices, result.result.data.json.serverTime);
+        }
+      } catch (error) {
+        console.error('Fetch devices error:', error);
+      }
+    }
+
+    function formatTimestamp(ts) {
+      const date = new Date(ts);
+      return date.toLocaleString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
+
+    function formatDuration(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      
+      if (hours > 0) {
+        return `${hours}h ${minutes % 60}m`;
+      } else if (minutes > 0) {
+        return `${minutes}m ${seconds % 60}s`;
+      }
+      return `${seconds}s`;
+    }
+
+    function renderDevices(devices, serverTime) {
+      const grid = document.getElementById('devicesGrid');
+      const countEl = document.getElementById('deviceCount');
+      
+      const onlineDevices = devices.filter(d => d.isOnline);
+      countEl.textContent = `${onlineDevices.length} Online / ${devices.length} Gesamt`;
+      
+      if (devices.length === 0) {
+        grid.innerHTML = `
+          <div class="no-devices">
+            <div class="no-devices-icon">📱</div>
+            <h3>Keine Geräte registriert</h3>
+            <p>Starte die App auf einem Gerät mit aktiviertem Tracking</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = devices.map(device => {
+        const connectionDuration = serverTime - device.connectedAt;
+        const lastUpdateAgo = serverTime - device.lastUpdate;
+        
+        return `
+        <div class="device-card ${device.isOnline ? '' : 'offline'}">
+          <div class="device-header">
+            <div>
+              <span class="device-name">${escapeHtml(device.deviceName)}</span>
+              <div class="device-model">${escapeHtml(device.deviceModel)} · ${escapeHtml(device.platform.toUpperCase())}</div>
+            </div>
+            <div style="text-align: right;">
+              <div class="device-status">
+                <span class="status-dot ${device.isOnline ? 'status-online' : 'status-offline'}"></span>
+                ${device.isOnline ? '<span class="live-badge">LIVE</span>' : 'Offline'}
+              </div>
+              <div class="connection-time">
+                Verbunden seit ${formatDuration(connectionDuration)}
+              </div>
+            </div>
+          </div>
+          
+          <div class="device-info">
+            <div class="info-row">
+              <span class="info-label">Geräte-ID</span>
+              <span class="info-value" style="font-size: 11px; word-break: break-all;">${escapeHtml(device.deviceId)}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Letztes Update</span>
+              <span class="info-value">${device.isOnline ? `vor ${Math.floor(lastUpdateAgo / 1000)}s` : formatTimestamp(device.lastUpdate)}</span>
+            </div>
+            ${device.location ? `
+              <div class="info-row">
+                <span class="info-label">📍 Standort</span>
+                <span class="info-value">${device.location.latitude.toFixed(5)}, ${device.location.longitude.toFixed(5)}${device.location.accuracy ? ` (±${Math.round(device.location.accuracy)}m)` : ''}</span>
+              </div>
+            ` : ''}
+          </div>
+          
+          ${device.location ? `
+            <div class="map-container">
+              <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=${device.location.longitude - 0.005}%2C${device.location.latitude - 0.005}%2C${device.location.longitude + 0.005}%2C${device.location.latitude + 0.005}&layer=mapnik&marker=${device.location.latitude}%2C${device.location.longitude}" loading="lazy"></iframe>
+            </div>
+          ` : `
+            <div class="map-placeholder">📍 Kein Standort verfügbar</div>
+          `}
+          
+          <div class="media-section">
+            <div class="media-title">📷 Kamera-Feed</div>
+            <div class="camera-preview">
+              ${device.cameraFrame ? `
+                <img src="${device.cameraFrame}" alt="Live Camera">
+                <div class="camera-timestamp">Zuletzt aktualisiert: ${formatTimestamp(device.lastUpdate)}</div>
+              ` : `
+                <div class="camera-placeholder">
+                  <span style="font-size: 32px;">📷</span>
+                  Warte auf Kamerabild...
+                </div>
+              `}
+            </div>
+          </div>
+          
+          <div class="audio-section">
+            <div class="media-title">🎤 Audio-Feed</div>
+            ${device.audioData ? `
+              <div class="audio-player">
+                <div class="audio-icon">🎵</div>
+                <audio controls src="${device.audioData}" style="flex: 1;"></audio>
+              </div>
+              <p style="font-size: 11px; color: #666; margin-top: 8px;">Audio aufgenommen: ${formatTimestamp(device.audioTimestamp || device.lastUpdate)}</p>
+            ` : `
+              <div class="audio-placeholder">🎤 Warte auf Audio-Aufnahme...</div>
+            `}
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    function escapeHtml(text) {
+      if (!text) return 'N/A';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    document.getElementById('password').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        login();
+      }
+    });
+  </script>
+</body>
+</html>
